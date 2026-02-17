@@ -93,6 +93,7 @@ This project follows **enterprise-grade API practices**:
 
 ---
 
+```
 # 📂 Project Structure
 
 ```
@@ -100,23 +101,23 @@ This project follows **enterprise-grade API practices**:
 CRM-Bridge-HubSpot-API-Proxy-Admin-Dashboard/
 │
 ├── backend/
-│ ├── node_modules/
-│ ├── Dockerfile
-│ ├── package.json
-│ ├── package-lock.json
-│ └── server.js # Express backend (HubSpot API integration)
+│   ├── node_modules/
+│   ├── Dockerfile
+│   ├── package.json
+│   ├── package-lock.json
+│   └── server.js              # Express backend (HubSpot API integration)
 │
 ├── frontend/
-│ ├── node_modules/
-│ ├── public/
-│ ├── src/ # React components & pages
-│ ├── .gitignore
-│ ├── package.json
-│ └── package-lock.json
+│   ├── node_modules/
+│   ├── public/
+│   ├── src/                   # React components & pages
+│   ├── .gitignore
+│   ├── package.json
+│   └── package-lock.json
 │
 └── README.md
 
-````
+```
 
 ---
 
@@ -296,3 +297,4 @@ B.Tech Electrical Engineering, NIT Jalandhar
 Backend Developer | MERN Stack | CRM Systems
 
 ---
+
