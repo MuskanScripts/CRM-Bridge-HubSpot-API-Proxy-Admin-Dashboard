@@ -70,8 +70,10 @@ body {
 
 .card-container {
   background: var(--card-bg);
+  justify-content: center;  /* horizontal */
+  align-items: center; 
   backdrop-filter: blur(10px);
-  padding: 2rem;
+  padding:6rem;
   border-radius: 1rem;
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
   border: 1px solid var(--card-border);
@@ -108,7 +110,7 @@ body {
 }
 
 .input-container {
-  margin: 0 1rem 1.5rem 1rem;
+  margin: 0 1rem 1.5rem -0.6rem;
 }
 
 .input-field {
