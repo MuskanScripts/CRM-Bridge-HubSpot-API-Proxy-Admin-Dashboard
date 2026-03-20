@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   getDeals,
   addDeal,
   deleteDeal,
-  updateDeal
+  updateDeal,
 } from "../api";
 import Navbar from "./Navbar";
 
@@ -15,7 +15,7 @@ export default function Deals({ token }) {
   const [editingId, setEditingId] = useState(null);
 
   // 🔄 Load deals
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const res = await getDeals(token);
       setData(res.data.results || []);
@@ -23,11 +23,11 @@ export default function Deals({ token }) {
       console.error(err.response?.data || err.message);
       alert("❌ Token not valid");
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (token) load();
-  }, [token]);
+  }, [token, load]);
 
   // ➕ Add or Update Deal
   const handleAddOrUpdate = async () => {
@@ -41,8 +41,8 @@ export default function Deals({ token }) {
         dealname: name,
         amount,
         pipeline: "default",
-        dealstage: "appointmentscheduled"
-      }
+        dealstage: "appointmentscheduled",
+      },
     };
 
     try {
@@ -61,6 +61,12 @@ export default function Deals({ token }) {
     } catch (err) {
       console.error(err.response?.data || err.message);
       alert("❌ Failed to save deal");
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleAddOrUpdate();
     }
   };
 
@@ -93,72 +99,94 @@ export default function Deals({ token }) {
   return (
     <div>
       <Navbar />
-      <h2>💰 Deals</h2>
+      <div className="app-container" style={{paddingTop: '2rem', justifyContent: 'flex-start'}}>
+        <div className="card-container" style={{maxWidth: '900px'}}>
+          <h2 style={{fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem', color: 'var(--text-primary)'}}>
+            💰 Deals
+          </h2>
+          <p style={{marginBottom: '1.5rem', color: 'var(--text-secondary)'}}>Add, view, and manage your deals.</p>
 
-      {/* ➕ Add / Update Form */}
-      <div style={{ marginBottom: "20px" }}>
-        <input
-          placeholder="Deal Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <input
-          placeholder="Amount"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-        />
+          <div style={{display: 'flex', gap: '0.5rem', marginBottom: '1.5rem'}}>
+            <input
+              placeholder="Deal Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="input-field"
+              style={{marginBottom: 0}}
+            />
+            <input
+              placeholder="Amount"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="input-field"
+              style={{marginBottom: 0}}
+            />
+            <button onClick={handleAddOrUpdate} className="btn-primary" style={{padding: '0.75rem 1rem'}}>
+              {editingId ? "Update" : "Add"}
+            </button>
+            {editingId && (
+              <button
+                onClick={() => {
+                  setEditingId(null);
+                  setName("");
+                  setAmount("");
+                }}
+                className="btn-danger"
+                style={{background: '#6c757d'}}
+              >
+                Cancel
+              </button>
+            )}
+          </div>
 
-        <button onClick={handleAddOrUpdate}>
-          {editingId ? "Update Deal" : "Add Deal"}
-        </button>
+          <input
+            placeholder="Search deals..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="input-field"
+          />
 
-        {editingId && (
-          <button
-            onClick={() => {
-              setEditingId(null);
-              setName("");
-              setAmount("");
-            }}
-          >
-            Cancel
-          </button>
-        )}
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Amount</th>
+                  <th>Stage</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((d) => (
+                  <tr key={d.id}>
+                    <td>{d.properties.dealname}</td>
+                    <td>{d.properties.amount}</td>
+                    <td>{d.properties.dealstage}</td>
+                    <td>
+                      <button
+                        className="btn-primary"
+                        style={{padding: '0.4rem 0.8rem', fontSize: '0.9rem', marginRight: '0.5rem'}}
+                        onClick={() => handleEdit(d)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="btn-danger"
+                        style={{padding: '0.4rem 0.8rem', fontSize: '0.9rem'}}
+                        onClick={() => handleDelete(d.id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
-
-      {/* 🔍 Search */}
-      <input
-        placeholder="Search deals..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={{ marginBottom: "20px", width: "300px" }}
-      />
-
-      {/* 📋 Table */}
-      <table border="1" width="100%">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Amount</th>
-            <th>Stage</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {filtered.map((d) => (
-            <tr key={d.id}>
-              <td>{d.properties.dealname}</td>
-              <td>{d.properties.amount}</td>
-              <td>{d.properties.dealstage}</td>
-
-              <td>
-                <button onClick={() => handleEdit(d)}>Edit</button>
-                <button onClick={() => handleDelete(d.id)}>Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

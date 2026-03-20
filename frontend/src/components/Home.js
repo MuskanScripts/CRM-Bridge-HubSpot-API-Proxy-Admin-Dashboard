@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import Toggle from "./Toggle";
 
 export default function Home({ setToken, token }) {
   const [input, setInput] = useState("");
@@ -12,28 +13,50 @@ export default function Home({ setToken, token }) {
     setToken(input.trim());
   };
 
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      connect();
+    }
+  };
+
   return (
-    <div style={{ textAlign: "center", padding: "30px" }}>
-      <h1>🚀 HubSpot CRM Dashboard</h1>
-
-      <input
-        placeholder="Paste HubSpot Access Token"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        style={{ padding: "10px", width: "300px" }}
-      />
-
-      <br /><br />
-
-      <button onClick={connect}>Connect</button>
+    <div className="app-container">
+      <div style={{position: 'absolute', top: '1rem', right: '1rem'}}>
+        <Toggle />
+      </div>
+      <div className="card-container">
+        <h1 style={{fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem', color: 'var(--text-primary)'}}>
+          🚀 HubSpot CRM Dashboard
+        </h1>
+        <p style={{marginBottom: '1.5rem', color: 'var(--text-secondary)'}}>Connect to your HubSpot account</p>
+        
+        <div className="input-container">
+          <input
+            placeholder="Paste HubSpot Access Token"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            className="input-field"
+          />
+        </div>
+        
+        <button onClick={connect} className="btn-primary">
+          Connect
+        </button>
+      </div>
 
       {token && (
-        <div style={{ marginTop: "30px" }}>
-          <h3>Navigate:</h3>
-          <Link to="/contacts">📇 Contacts</Link> |{" "}
-          <Link to="/companies">🏢 Companies</Link> |{" "}
-          <Link to="/deals">💰 Deals</Link> |{" "}
-          <Link to="/tickets">🎫 Tickets</Link>
+        <div style={{marginTop: '2.5rem'}}>
+          <h3 style={{fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem', color: 'var(--text-secondary)'}}>
+            Navigate:
+          </h3>
+
+          <div style={{display: 'flex', gap: '1rem', fontSize: '1.125rem', justifyContent: 'center'}}>
+            <Link className="nav-link" to="/contacts">📇 Contacts</Link>
+            <Link className="nav-link" to="/companies">🏢 Companies</Link>
+            <Link className="nav-link" to="/deals">💰 Deals</Link>
+            <Link className="nav-link" to="/tickets">🎫 Tickets</Link>
+          </div>
         </div>
       )}
     </div>

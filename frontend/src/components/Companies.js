@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   getCompanies,
   addCompany,
   updateCompany,
-  deleteCompany
+  deleteCompany,
 } from "../api";
 import Navbar from "./Navbar";
 
@@ -13,10 +13,8 @@ export default function Companies({ token }) {
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState(null);
 
-  ////////////////////////////////////////////////////////////
-  // 🔄 LOAD COMPANIES
-  ////////////////////////////////////////////////////////////
-  const load = async () => {
+  // 🔄 Load companies
+  const load = useCallback(async () => {
     try {
       const res = await getCompanies(token);
       setData(res.data.results || []);
@@ -24,15 +22,13 @@ export default function Companies({ token }) {
       console.error(err.response?.data || err.message);
       alert("❌ Token not valid");
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (token) load();
-  }, [token]);
+  }, [token, load]);
 
-  ////////////////////////////////////////////////////////////
-  // ➕ ADD or ✏️ UPDATE COMPANY
-  ////////////////////////////////////////////////////////////
+  // ➕ Add or ✏️ Update company
   const handleAddOrUpdate = async () => {
     if (!name) {
       alert("⚠️ Enter company name");
@@ -41,8 +37,8 @@ export default function Companies({ token }) {
 
     const body = {
       properties: {
-        name
-      }
+        name,
+      },
     };
 
     try {
@@ -63,9 +59,13 @@ export default function Companies({ token }) {
     }
   };
 
-  ////////////////////////////////////////////////////////////
-  // ❌ DELETE COMPANY
-  ////////////////////////////////////////////////////////////
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleAddOrUpdate();
+    }
+  };
+
+  // ❌ Delete company
   const handleDelete = async (id) => {
     try {
       await deleteCompany(token, id);
@@ -76,84 +76,96 @@ export default function Companies({ token }) {
     }
   };
 
-  ////////////////////////////////////////////////////////////
-  // ✏️ EDIT COMPANY
-  ////////////////////////////////////////////////////////////
+  // ✏️ Edit company
   const handleEdit = (company) => {
     setName(company.properties?.name || "");
     setEditingId(company.id);
   };
 
-  ////////////////////////////////////////////////////////////
-  // 🔍 SEARCH FILTER
-  ////////////////////////////////////////////////////////////
+  // 🔍 Search filter
   const filtered = data.filter((c) => {
     const companyName = c.properties?.name || "";
     return companyName.toLowerCase().includes(search.toLowerCase());
   });
 
-  ////////////////////////////////////////////////////////////
-  // UI
-  ////////////////////////////////////////////////////////////
   return (
     <div>
       <Navbar />
-      <h2>🏢 Companies</h2>
+      <div className="app-container" style={{paddingTop: '2rem', justifyContent: 'flex-start'}}>
+        <div className="card-container" style={{maxWidth: '900px'}}>
+          <h2 style={{fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem', color: 'var(--text-primary)'}}>
+            🏢 Companies
+          </h2>
+          <p style={{marginBottom: '1.5rem', color: 'var(--text-secondary)'}}>Add, view, and manage your companies.</p>
 
-      {/* ➕ Add / Update Form */}
-      <div style={{ marginBottom: "20px" }}>
-        <input
-          placeholder="Company Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+          <div style={{display: 'flex', gap: '0.5rem', marginBottom: '1.5rem'}}>
+            <input
+              placeholder="Company Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="input-field"
+              style={{marginBottom: 0}}
+            />
+            <button onClick={handleAddOrUpdate} className="btn-primary" style={{padding: '0.75rem 1rem'}}>
+              {editingId ? "Update" : "Add"}
+            </button>
+            {editingId && (
+              <button
+                onClick={() => {
+                  setEditingId(null);
+                  setName("");
+                }}
+                className="btn-danger"
+                style={{background: '#6c757d'}}
+              >
+                Cancel
+              </button>
+            )}
+          </div>
 
-        <button onClick={handleAddOrUpdate}>
-          {editingId ? "Update Company" : "Add Company"}
-        </button>
+          <input
+            placeholder="Search companies..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="input-field"
+          />
 
-        {editingId && (
-          <button
-            onClick={() => {
-              setEditingId(null);
-              setName("");
-            }}
-          >
-            Cancel
-          </button>
-        )}
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((c) => (
+                  <tr key={c.id}>
+                    <td>{c.properties?.name}</td>
+                    <td>
+                      <button
+                        className="btn-primary"
+                        style={{padding: '0.4rem 0.8rem', fontSize: '0.9rem', marginRight: '0.5rem'}}
+                        onClick={() => handleEdit(c)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="btn-danger"
+                        style={{padding: '0.4rem 0.8rem', fontSize: '0.9rem'}}
+                        onClick={() => handleDelete(c.id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
-
-      {/* 🔍 Search */}
-      <input
-        placeholder="Search companies..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={{ marginBottom: "20px", width: "300px" }}
-      />
-
-      {/* 📋 Table */}
-      <table border="1" width="100%">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {filtered.map((c) => (
-            <tr key={c.id}>
-              <td>{c.properties?.name}</td>
-
-              <td>
-                <button onClick={() => handleEdit(c)}>Edit</button>
-                <button onClick={() => handleDelete(c.id)}>Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }
