@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:3000";   // ❗ remove trailing slash
+const BASE_URL =  process.env.REACT_APP_API_URL;  // ❗ remove trailing slash
 
 ////////////////////////////////////////////////////////////
 // 🔐 HEADER HELPER (Token Normalization)
