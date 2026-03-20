@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { getContacts, addContact, deleteContact } from "../api";
 import Navbar from "./Navbar";
 
@@ -8,11 +8,11 @@ export default function Contacts({ token }) {
   const [form, setForm] = useState({
     firstname: "",
     lastname: "",
-    email: ""
+    email: "",
   });
 
   // 🔄 Load contacts
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const res = await getContacts(token);
       setData(res.data.results || []);
@@ -20,11 +20,11 @@ export default function Contacts({ token }) {
       console.error(err.response?.data || err.message);
       alert("❌ Failed to load contacts / invalid token");
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (token) load();
-  }, [token]);
+  }, [token, load]);
 
   // ➕ Add contact
   const handleAdd = async () => {
@@ -40,6 +40,12 @@ export default function Contacts({ token }) {
     } catch (err) {
       console.error(err.response?.data || err.message);
       alert("❌ Failed to add contact");
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleAdd();
     }
   };
 
@@ -65,67 +71,81 @@ export default function Contacts({ token }) {
   return (
     <div>
       <Navbar />
-      <h2>📇 Contacts</h2>
+      <div className="app-container" style={{paddingTop: '2rem', justifyContent: 'flex-start'}}>
+        <div className="card-container" style={{maxWidth: '900px'}}>
+          <h2 style={{fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem', color: 'var(--text-primary)'}}>
+            📇 Contacts
+          </h2>
+          <p style={{marginBottom: '1.5rem', color: 'var(--text-secondary)'}}>Add, view, and manage your contacts.</p>
 
-      {/* ➕ Add Form */}
-      <div style={{ marginBottom: "20px" }}>
-        <input
-          placeholder="First Name"
-          value={form.firstname}
-          onChange={(e) =>
-            setForm({ ...form, firstname: e.target.value })
-          }
-        />
-        <input
-          placeholder="Last Name"
-          value={form.lastname}
-          onChange={(e) =>
-            setForm({ ...form, lastname: e.target.value })
-          }
-        />
-        <input
-          placeholder="Email"
-          value={form.email}
-          onChange={(e) =>
-            setForm({ ...form, email: e.target.value })
-          }
-        />
-        <button onClick={handleAdd}>Add Contact</button>
+          <div style={{display: 'flex', gap: '0.5rem', marginBottom: '1.5rem'}}>
+            <input
+              placeholder="First Name"
+              value={form.firstname}
+              onChange={(e) => setForm({ ...form, firstname: e.target.value })}
+              onKeyPress={handleKeyPress}
+              className="input-field"
+              style={{marginBottom: 0}}
+            />
+            <input
+              placeholder="Last Name"
+              value={form.lastname}
+              onChange={(e) => setForm({ ...form, lastname: e.target.value })}
+              onKeyPress={handleKeyPress}
+              className="input-field"
+              style={{marginBottom: 0}}
+            />
+            <input
+              placeholder="Email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              onKeyPress={handleKeyPress}
+              className="input-field"
+              style={{marginBottom: 0}}
+            />
+            <button onClick={handleAdd} className="btn-primary" style={{padding: '0.75rem 1rem'}}>
+              Add
+            </button>
+          </div>
+
+          <input
+            placeholder="Search contacts..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="input-field"
+          />
+
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>First</th>
+                  <th>Last</th>
+                  <th>Email</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((c) => (
+                  <tr key={c.id}>
+                    <td>{c.properties.firstname}</td>
+                    <td>{c.properties.lastname}</td>
+                    <td>{c.properties.email}</td>
+                    <td>
+                      <button
+                        className="btn-danger"
+                        onClick={() => handleDelete(c.id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
-
-      {/* 🔍 Search */}
-      <input
-        placeholder="Search contacts..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={{ marginBottom: "20px", width: "300px" }}
-      />
-
-      {/* 📋 Table */}
-      <table border="1" width="100%">
-        <thead>
-          <tr>
-            <th>First</th>
-            <th>Last</th>
-            <th>Email</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filtered.map((c) => (
-            <tr key={c.id}>
-              <td>{c.properties.firstname}</td>
-              <td>{c.properties.lastname}</td>
-              <td>{c.properties.email}</td>
-              <td>
-                <button onClick={() => handleDelete(c.id)}>
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

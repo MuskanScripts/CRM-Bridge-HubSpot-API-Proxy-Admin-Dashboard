@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   getTickets,
   addTicket,
   updateTicket,
-  deleteTicket
+  deleteTicket,
 } from "../api";
 import Navbar from "./Navbar";
 
@@ -13,10 +13,8 @@ export default function Tickets({ token }) {
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState(null);
 
-  ////////////////////////////////////////////////////////
-  // 🔄 LOAD TICKETS
-  ////////////////////////////////////////////////////////
-  const load = async () => {
+  // 🔄 Load tickets
+  const load = useCallback(async () => {
     try {
       const res = await getTickets(token);
       setData(res.data.results || []);
@@ -24,15 +22,13 @@ export default function Tickets({ token }) {
       console.error(err.response?.data || err.message);
       alert("❌ Tickets not enabled or invalid token");
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (token) load();
-  }, [token]);
+  }, [token, load]);
 
-  ////////////////////////////////////////////////////////
-  // ➕ ADD or ✏️ UPDATE TICKET
-  ////////////////////////////////////////////////////////
+  // ➕ Add or ✏️ Update ticket
   const handleAddOrUpdate = async () => {
     if (!subject) {
       alert("⚠️ Enter ticket subject");
@@ -43,8 +39,8 @@ export default function Tickets({ token }) {
       properties: {
         subject,
         hs_pipeline: "0",
-        hs_pipeline_stage: "1"
-      }
+        hs_pipeline_stage: "1",
+      },
     };
 
     try {
@@ -63,9 +59,13 @@ export default function Tickets({ token }) {
     }
   };
 
-  ////////////////////////////////////////////////////////
-  // ❌ DELETE
-  ////////////////////////////////////////////////////////
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleAddOrUpdate();
+    }
+  };
+
+  // ❌ Delete
   const handleDelete = async (id) => {
     try {
       await deleteTicket(token, id);
@@ -76,17 +76,13 @@ export default function Tickets({ token }) {
     }
   };
 
-  ////////////////////////////////////////////////////////
-  // ✏️ EDIT
-  ////////////////////////////////////////////////////////
+  // ✏️ Edit
   const handleEdit = (t) => {
     setSubject(t.properties?.subject || "");
     setEditingId(t.id);
   };
 
-  ////////////////////////////////////////////////////////
-  // 🔍 SEARCH
-  ////////////////////////////////////////////////////////
+  // 🔍 Search
   const filtered = data.filter((t) => {
     const values = Object.values(t.properties || {})
       .map((v) => (v ? v.toString().toLowerCase() : ""))
@@ -94,68 +90,84 @@ export default function Tickets({ token }) {
     return values.includes(search.toLowerCase());
   });
 
-  ////////////////////////////////////////////////////////
-  // UI
-  ////////////////////////////////////////////////////////
   return (
     <div>
       <Navbar />
-      <h2>🎫 Tickets</h2>
+      <div className="app-container" style={{paddingTop: '2rem', justifyContent: 'flex-start'}}>
+        <div className="card-container" style={{maxWidth: '900px'}}>
+          <h2 style={{fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem', color: 'var(--text-primary)'}}>
+            🎫 Tickets
+          </h2>
+          <p style={{marginBottom: '1.5rem', color: 'var(--text-secondary)'}}>Add, view, and manage your tickets.</p>
 
-      {/* ➕ ADD / UPDATE */}
-      <div style={{ marginBottom: "20px" }}>
-        <input
-          placeholder="Ticket Subject"
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-        />
+          <div style={{display: 'flex', gap: '0.5rem', marginBottom: '1.5rem'}}>
+            <input
+              placeholder="Ticket Subject"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="input-field"
+              style={{marginBottom: 0}}
+            />
+            <button onClick={handleAddOrUpdate} className="btn-primary" style={{padding: '0.75rem 1rem'}}>
+              {editingId ? "Update" : "Add"}
+            </button>
+            {editingId && (
+              <button
+                onClick={() => {
+                  setEditingId(null);
+                  setSubject("");
+                }}
+                className="btn-danger"
+                style={{background: '#6c757d'}}
+              >
+                Cancel
+              </button>
+            )}
+          </div>
 
-        <button onClick={handleAddOrUpdate}>
-          {editingId ? "Update Ticket" : "Add Ticket"}
-        </button>
+          <input
+            placeholder="Search tickets..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="input-field"
+          />
 
-        {editingId && (
-          <button
-            onClick={() => {
-              setEditingId(null);
-              setSubject("");
-            }}
-          >
-            Cancel
-          </button>
-        )}
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Subject</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((t) => (
+                  <tr key={t.id}>
+                    <td>{t.properties.subject}</td>
+                    <td>
+                      <button
+                        className="btn-primary"
+                        style={{padding: '0.4rem 0.8rem', fontSize: '0.9rem', marginRight: '0.5rem'}}
+                        onClick={() => handleEdit(t)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="btn-danger"
+                        style={{padding: '0.4rem 0.8rem', fontSize: '0.9rem'}}
+                        onClick={() => handleDelete(t.id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
-
-      {/* 🔍 SEARCH */}
-      <input
-        placeholder="Search tickets..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={{ marginBottom: "20px", width: "300px" }}
-      />
-
-      {/* 📋 TABLE */}
-      <table border="1" width="100%">
-        <thead>
-          <tr>
-            <th>Subject</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {filtered.map((t) => (
-            <tr key={t.id}>
-              <td>{t.properties.subject}</td>
-
-              <td>
-                <button onClick={() => handleEdit(t)}>Edit</button>
-                <button onClick={() => handleDelete(t.id)}>Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

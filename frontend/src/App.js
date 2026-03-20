@@ -1,14 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-
+import { ThemeProvider, ThemeContext } from "./context/ThemeContext";
 import Home from "./components/Home";
 import Contacts from "./components/Contacts";
 import Companies from "./components/Companies";
 import Deals from "./components/Deals";
 import Tickets from "./components/Tickets";
 
-export default function App() {
+function AppContent() {
   const [token, setToken] = useState("");
+  const { theme } = useContext(ThemeContext);
+
+  useEffect(() => {
+    document.body.className = theme;
+  }, [theme]);
 
   return (
     <Router>
@@ -20,5 +25,13 @@ export default function App() {
         <Route path="/tickets" element={<Tickets token={token} />} />
       </Routes>
     </Router>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }
